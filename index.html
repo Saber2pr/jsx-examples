@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script src="https://saber2pr.top/jsx/jsx.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/styles/default.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/highlight.min.js"></script>
+    <title>By Saber2pr</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        overflow-x: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+
+      .app {
+        position: relative;
+      }
+
+      .nav-main {
+        position: absolute;
+        left: -20rem;
+        width: 20rem;
+        height: 100vh;
+        overflow-y: auto;
+        user-select: none;
+      }
+
+      .nav-main .header {
+        padding: 0 2rem;
+        overflow: hidden;
+        height: 4rem;
+        line-height: 4rem;
+        border-bottom: 1px solid #e6eaea;
+        background-color: #f4f7f6;
+      }
+
+      @media (max-width: 700px) {
+        .nav-main .header {
+          height: 3rem;
+          line-height: 3rem;
+        }
+      }
+
+      .nav-main .header .pull-left {
+        float: left;
+      }
+
+      .nav-main .header .pull-right {
+        float: right;
+      }
+
+      .pull-right .bt-close {
+        cursor: pointer;
+      }
+
+      .nav-main .box-bottom {
+        padding: 2rem 2rem 2rem 2rem;
+        border-top: 1px solid #e6eaea;
+      }
+
+      .nav-main .item {
+        display: block;
+        padding: 1.5rem 2rem;
+        cursor: pointer;
+        background: #f4f7f6;
+        color: black;
+        border-bottom: 1px solid #e6eaea;
+      }
+
+      @media (max-width: 700px) {
+        .nav-main .item {
+          padding: 1rem 2rem;
+        }
+      }
+
+      .nav-main .item:hover {
+        background-color: #fcfcfc;
+      }
+
+      .nav-main ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .wrapper {
+        width: 100%;
+        height: 100vh;
+        transition: transform 0.5s ease-in-out;
+      }
+
+      .wrapper::before {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s ease-in-out;
+        z-index: 3;
+      }
+
+      .mask-show .wrapper::before {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .mask-show .wrapper {
+        transform: translateX(20rem);
+        position: fixed;
+      }
+
+      #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f4f7f6;
+        z-index: 2;
+      }
+
+      .header-main {
+        height: 4rem;
+        line-height: 4rem;
+        background-color: #f4f7f6;
+        display: flex;
+        user-select: none;
+      }
+
+      @media (max-width: 700px) {
+        .header-main {
+          height: 3rem;
+          line-height: 3rem;
+        }
+      }
+
+      .header-main .box-middle {
+        flex-grow: 1;
+        text-align: center;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        padding: 0 1rem;
+      }
+
+      .header-main .box-left {
+        padding: 0 1.5rem;
+        cursor: pointer;
+        border-right: 1px solid #e6eaea;
+        white-space: nowrap;
+      }
+
+      .box-left .menu-name {
+        pointer-events: none;
+      }
+
+      @media (max-width: 700px) {
+        .box-left .menu-name {
+          display: none;
+        }
+      }
+
+      .main-box {
+        padding: 0 2rem;
+      }
+
+      .main-content {
+        padding: 5rem 0;
+        position: relative;
+        min-height: 5rem;
+      }
+
+      .footer-box {
+        padding: 0 2rem;
+      }
+
+      .footer-content {
+        padding: 2rem 0;
+        text-align: center;
+      }
+
+      @keyframes slide {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.3;
+          transform: scale(2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .Loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .Loading-Block {
+        width: 24px;
+        height: 24px;
+        background: #a2b4cf;
+        border-radius: 100%;
+        display: inline-block;
+        animation: slide 1s infinite;
+      }
+      .Loading-Block:nth-child(1) {
+        animation-delay: 0.1s;
+        background: #8695ac;
+      }
+      .Loading-Block:nth-child(2) {
+        animation-delay: 0.2s;
+        background: #6e7a8d;
+      }
+      .Loading-Block:nth-child(3) {
+        animation-delay: 0.3s;
+        background: #555e6d;
+      }
+      .Loading-Block:nth-child(4) {
+        animation-delay: 0.4s;
+        background: #3e4550;
+      }
+      .Loading-Block:nth-child(5) {
+        animation-delay: 0.5s;
+        background: #262a31;
+      }
+
+      .ico-menu {
+        top: -1px;
+        margin-right: 10px;
+        vertical-align: middle;
+        position: relative;
+        display: inline-block;
+        width: 15px;
+        height: 13px;
+        transition: all 0.3s ease-in-out;
+        pointer-events: none;
+      }
+
+      @media (max-width: 700px) {
+        .ico-menu {
+          margin-right: 0;
+        }
+      }
+
+      .ico-menu .bar:nth-child(1) {
+        top: 0;
+      }
+      .ico-menu .bar:nth-child(2) {
+        top: 4px;
+      }
+      .ico-menu .bar:nth-child(3) {
+        top: 8px;
+      }
+
+      .ico-menu .bar {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background-color: #202121;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const config = {
+        copyright: "Copyright © 2019 saber2pr",
+        origin: "https://saber2pr.top",
+        menuData: "https://saber2pr.top/static/data/blog.json"
+      }
+
+      const useImperativeHandle = (ref, creator) => (ref.current = creator())
+      const forwardRef = FC => ({ ref, ...props }) => FC(props, ref)
+      const useRef = value => ({ current: value })
+      const renderDOM = (element, container) => container.append(element)
+      const Suspense = ({ fallback, children: promise }) => {
+        promise.then(({ default: dom }) => {
+          const container = fallback.parentNode
+          container.replaceChild(dom, fallback)
+        })
+        return jsx`<${jsx.frag}>${fallback}</${jsx.frag}>`
+      }
+      const lazy = lazyComponent => () => lazyComponent()
+      const getHash = () => decodeURIComponent(location.hash).slice(1)
+
+      const Ul = ({ children, node, index = 0, render }) => {
+        const ul_ref = useRef()
+        const name_ref = useRef()
+        const btn_ref = useRef()
+        const change = () => {
+          if (ul_ref.current.innerHTML) {
+            ul_ref.current.innerHTML = null
+            node.expand = false
+          } else {
+            ul_ref.current.append(...[].concat(children))
+            node.expand = true
+          }
+
+          if (node.expand) {
+            name_ref.current.className = `Ul-Name Ul-Name-Active`
+            btn_ref.current.open()
+          } else {
+            name_ref.current.className = `Ul-Name`
+            btn_ref.current.close()
+          }
+        }
+        return jsx`
+          <${jsx.frag}>
+            <span
+              className="Ul-Name"
+              ref=${name_ref}
+              onClick=${change}
+            >
+              ${render(node, index, btn_ref)}
+            </span>
+            <ul className="Ul" ref=${ul_ref}></ul>
+          </${jsx.frag}>`
+      }
+
+      const Tree = ({ from: root, map: render, depth = 0 }) => {
+        const children = root.children
+        if (root)
+          if (children) {
+            const childNodes = children.map(
+              (node, key) => jsx`
+                            <li>
+                              <${Tree}
+                                from=${node}
+                                map=${render}
+                                depth=${depth + 1}
+                              />
+                            </li>`
+            )
+            if (depth === 0) return childNodes
+            if (root.path) {
+              root.expand = getHash().startsWith(root.path)
+            }
+            return jsx`<${Ul}
+                        node=${root}
+                        render=${render}
+                        index=${depth}
+                      >
+                        ${childNodes}
+                      </${Ul}>`
+          } else {
+            return render(root, depth)
+          }
+      }
+
+      const List = ({ list }) =>
+        list.map(l => jsx`<li><a class="item">${l}</a></li>`)
+
+      const Aside = ({ close, list, data }) => {
+        const Item = forwardRef(({ node }, ref) => {
+          if (!node.children) {
+            return jsx`<a class="item" href=${"#" +
+              node.path} onClick=${close}>${node.title}</a>`
+          }
+          const btn_ref = useRef()
+          const btn_icons = {
+            open: "[展开]",
+            close: "[关闭]"
+          }
+          useImperativeHandle(ref, () => ({
+            open() {
+              btn_ref.current.innerHTML = btn_icons.close
+            },
+            close() {
+              btn_ref.current.innerHTML = btn_icons.open
+            }
+          }))
+          return jsx`
+            <span class="item">
+              <strong>${node.title}</strong>
+              <span ref=${btn_ref} style=${{ marginLeft: "0.5rem" }}>${
+            btn_icons.open
+          }</span>
+            </span>`
+        })
+
+        return jsx`
+          <nav class="nav-main">
+            <div class="top">
+              <div class="header">
+                <div class="pull-left">目录</div>
+                <div class="pull-right"><div class="bt-close" onClick=${close}>关闭</div></div>
+              </div>
+              <ul>
+                <${Tree}
+                  from=${data}
+                  map=${(node, _, ref) =>
+                    jsx`<${Item} node=${node} ref=${ref}/>`}
+                />
+              </ul>
+            </div>
+            <div class="box-bottom">
+              <div class="box-version">
+                ${config.copyright}
+              </div>
+              <a href=${config.origin} target="_blank">${config.origin}</a>
+            </div>
+          </nav>`
+      }
+
+      const Header = ({ open, ref }) => {
+        const ref_title = useRef()
+        const getPageName = () =>
+          getHash()
+            .split("/")
+            .pop()
+        window.addEventListener("hashchange", () => {
+          const hash = getHash()
+          if (hash) {
+            const pageName = getPageName()
+            ref_title.current.innerHTML = pageName
+            document.title = pageName
+          }
+        })
+        const pageName = getPageName()
+        document.title = pageName
+        return jsx`
+          <header id="header">
+            <div class="header-main">
+              <div class="box-left" ref=${ref}>
+                <${IconBar}/>
+                <span class="menu-name">目录</span>
+              </div>
+              <div class="box-middle" ref=${ref_title}>${pageName}</div>
+            </div>
+          </header>`
+      }
+
+      const findNodeByPath = (path, entry) => {
+        const stack = [entry]
+        while (stack.length) {
+          const node = stack.pop()
+          if (node.path === path) return node
+          node.children && stack.push(...node.children)
+        }
+      }
+
+      const fetchContent = url =>
+        fetch(`${config.origin}${url}.md`).then(res => res.text())
+
+      const queryRootFirstChild = entry => {
+        const children = entry.children
+        for (const ch of children) {
+          if (!ch.children) return ch
+        }
+      }
+
+      const useContentLoad = data => {
+        const ref = useRef()
+        const asyncReFresh = () => {
+          const hash = getHash()
+          if (hash) {
+            fetchContent(hash)
+              .then(text => {
+                ref.current.innerHTML = null
+                if (text.startsWith("<!DOCTYPE html>")) {
+                  ref.current.innerHTML = "加载失败"
+                } else {
+                  ref.current.append(jsx`<${Md2jsx}>${text}</${Md2jsx}>`)
+                }
+              })
+              .catch(err => {
+                console.log(err)
+                ref.current.innerHTML = "加载失败"
+              })
+          }
+        }
+        window.addEventListener("hashchange", () => {
+          asyncReFresh()
+          ref.current.innerHTML = null
+          ref.current.append(jsx`<${Loading}/>`)
+        })
+        asyncReFresh()
+        return ref
+      }
+
+      const Main = ({ data }) => {
+        const ref = useContentLoad(data)
+        return jsx`
+              <main>
+                <div class="main-box">
+                  <div class="main-content" ref=${ref}></div>
+                </div>
+              </main>`
+      }
+
+      const Footer = () => jsx`
+        <footer>
+          <div class="footer-box">
+            <div class="footer-content">${config.copyright}</div>
+          </div>
+        </footer>`
+
+      const useMaskSwitch = () => {
+        const ref = useRef()
+        const menuOpen_ref = useRef()
+        const open = () => {
+          ref.current.className = "app mask-show"
+        }
+        const close = () => {
+          ref.current.className = "app"
+        }
+        const canClose = () => ref.current.className === "app mask-show"
+        return { ref, open, close, canClose, menuOpen_ref }
+      }
+
+      const App = ({ data }) => {
+        const { ref, open, close, canClose, menuOpen_ref } = useMaskSwitch()
+        const firstChild = queryRootFirstChild(data)
+
+        return jsx`<div class="app" ref=${ins => {
+          const hash = getHash()
+          if (!hash) location.hash = firstChild.path
+          ref.current = ins
+        }}>
+          <div class="wrapper" onClick=${function(event) {
+            canClose() && event.target === this && close()
+            event.target === menuOpen_ref.current && open()
+          }}>
+            <${Aside} close=${close} list=${[1, 2, 3]} data=${data}/>
+            <${Header} ref=${menuOpen_ref}/>
+            <${Main} data=${data}/>
+            <${Footer}/>
+          </div>
+        </div>`
+      }
+
+      const Loading = () => jsx`
+        <div className="Loading">
+          <div className="Loading-Block" />
+          <div className="Loading-Block" />
+          <div className="Loading-Block" />
+          <div className="Loading-Block" />
+          <div className="Loading-Block" />
+        </div>`
+
+      const RequestData = lazy(async () => {
+        const data = await fetch(config.menuData).then(res => res.json())
+        return {
+          default: jsx`<${App} data=${data}/>`
+        }
+      })
+
+      const Index = () => jsx`
+        <${Suspense} fallback=${jsx`<${Loading}/>`}>
+          <${RequestData}/>
+        </${Suspense}>`
+
+      const mergeCode = ls => {
+        const result = []
+        const codes = []
+        let lock = false
+        for (const l of ls) {
+          if (l.startsWith("```")) lock = !lock
+          if (lock) {
+            codes.push(l)
+          } else {
+            if (l === "") continue
+            codes.push(l)
+            result.push(codes.join("\n"))
+            codes.length = 0
+          }
+        }
+        return result
+      }
+
+      const REG = {
+        codetype: /```[a-z]+/,
+        imgtype: /^\!\[.*\]\(.*\)/,
+        imgtype_title: /\[.*\]/,
+        imgtype_url: /\(.*\)/,
+        atype_url: /^\[.*\]\(.*\)/
+      }
+
+      const Md2jsx = ({ children, theme }) => {
+        const nodes = []
+        const lines = mergeCode(children.split("\n"))
+        for (let i = 0; i < lines.length; ++i) {
+          const line = lines[i]
+          if (line.startsWith("```")) {
+            renderCode({ nodes, i, line, theme })
+          } else if (line.startsWith("#")) {
+            renderHeader({ nodes, i, line })
+          } else if (line.startsWith(">")) {
+            renderComment({ nodes, i, line })
+          } else if (REG.imgtype.test(line)) {
+            renderImg({ nodes, i, line })
+          } else if (REG.atype_url.test(line)) {
+            renderAnchor({ nodes, i, line })
+          } else if (line.startsWith("---") || line.startsWith("***")) {
+            renderHR({ nodes, i, line })
+          } else {
+            nodes.push(jsx`<p>${line}</p>`)
+          }
+        }
+        return jsx`<${jsx.frag}>${nodes}</${jsx.frag}>`
+      }
+
+      const renderCode = ({ line, nodes, theme, i }) => {
+        const codetype = REG.codetype.exec(line)[0].slice(3)
+        const code = line.slice(codetype.length + 4, line.length - 4)
+        nodes.push(
+          jsx`<pre><code ref=${block =>
+            hljs.highlightBlock(block)} class=${codetype}>${code}</code></pre>`
+        )
+      }
+
+      const renderHeader = ({ line, nodes, i }) => {
+        let count = 0
+        let text = ""
+        for (const ch of line) {
+          if (ch === "#") {
+            count++
+          } else {
+            text += ch
+          }
+        }
+        const h = document.createElement("h" + count)
+        h.textContent = text
+        nodes.push(h)
+      }
+
+      const renderComment = ({ nodes, i, line }) => {
+        nodes.push(
+          jsx`<p
+            style=${{
+              color: "gray",
+              borderLeft: "0.2rem solid #d0d0d0",
+              paddingLeft: "0.5rem"
+            }}
+          >
+            ${line.slice(2)}
+          </p>`
+        )
+      }
+
+      const renderImg = ({ nodes, i, line }) => {
+        const meta = line.match(REG.imgtype)[0]
+        const title = meta.match(REG.imgtype_title)[0].replace(/\[|\]/g, "")
+        const url = meta.match(REG.imgtype_url)[0].replace(/\(|\)/g, "")
+        nodes.push(
+          jsx`<img src=${url} alt=${title} style=${{ maxWidth: "100%" }} />`
+        )
+      }
+
+      const renderAnchor = ({ nodes, i, line }) => {
+        const meta = line.match(REG.atype_url)[0]
+        const title = meta.match(REG.imgtype_title)[0].replace(/\[|\]/g, "")
+        const url = meta.match(REG.imgtype_url)[0].replace(/\(|\)/g, "")
+        nodes.push(
+          jsx`<div>
+            <a href=${url} title=${url}>
+              ${title}
+            </a>
+          </div>`
+        )
+      }
+
+      const renderHR = ({ nodes, i, line }) => nodes.push(jsx`<hr />`)
+
+      const IconBar = () => jsx`
+        <div class="ico-menu">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>`
+
+      renderDOM(jsx`<${Index}/>`, document.getElementById("root"))
+    </script>
+  </body>
+</html>
