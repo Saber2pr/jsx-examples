@@ -138,6 +138,7 @@
         background-color: #f4f7f6;
         display: flex;
         user-select: none;
+        border-bottom: 1px solid #e6eaea;
       }
 
       @media (max-width: 700px) {
@@ -163,12 +164,26 @@
         white-space: nowrap;
       }
 
+      .header-main .box-right {
+        padding: 0 1.5rem;
+        cursor: pointer;
+        border-left: 1px solid #e6eaea;
+        white-space: nowrap;
+      }
+
       .box-left .menu-name {
         pointer-events: none;
       }
 
+      .box-right .search-name {
+        margin-left: 10px;
+      }
+
       @media (max-width: 700px) {
         .box-left .menu-name {
+          display: none;
+        }
+        .box-right .search-name {
           display: none;
         }
       }
@@ -281,6 +296,63 @@
         background-color: #202121;
         border-radius: 2px;
         overflow: hidden;
+      }
+
+      .icon-search {
+        display: inline-block;
+        transform: rotate(-45deg);
+        width: 0.7rem;
+        height: 0.7rem;
+        border: 1.4px solid black;
+        border-radius: 50%;
+        text-align: center;
+      }
+
+      .icon-search span {
+        position: absolute;
+        top: 100%;
+        width: 0.1rem;
+        height: 0.4rem;
+        background: black;
+      }
+
+      .show {
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+
+      .box-search {
+        opacity: 0;
+        visibility: hidden;
+        display: flex;
+        position: absolute;
+        top: 0;
+        left: 106px;
+        width: calc(100% - 106px);
+        height: 4rem;
+        line-height: 4rem;
+        background-color: #f4f7f6;
+      }
+
+      @media (max-width: 700px) {
+        .box-search {
+          height: 3rem;
+          line-height: 3rem;
+          left: 64px;
+          width: calc(100% - 64px);
+        }
+      }
+
+      .box-search .box-left {
+        width: 100%;
+        display: flex;
+      }
+
+      .box-search .search-input {
+        flex: 1;
+        border: 0;
+        background-color: transparent;
+        outline: none;
       }
     </style>
   </head>
@@ -419,7 +491,66 @@
             </nav>`
         }
 
-        const Header = ({ open, ref }) => {
+        const debounce = (callback, delta = 300) => {
+          clearTimeout(debounce["throttle"])
+          debounce["throttle"] = setTimeout(callback, delta)
+        }
+
+        const useSearchSwitch = data => {
+          const ref = useRef()
+          ref.show = false
+          const ref_input = useRef()
+
+          const open = () => {
+            ref.show = true
+            ref.current.className = "box-search show"
+            ref_input.current.focus()
+          }
+
+          const list = collect(data)
+
+          const onInput = e =>
+            debounce(() => {
+              console.log(e.target.value)
+            })
+
+          const close = () => {
+            ref.show = false
+            ref.current.className = "box-search"
+            ref_input.current.value = ""
+          }
+
+          const switchSearch = () => (ref.show ? close() : open())
+          return [ref, ref_input, switchSearch, onInput]
+        }
+
+        const collect = (tree, stack = [tree]) => {
+          const result = []
+          while (stack.length) {
+            const node = stack.shift()
+            node === tree || result.push(node)
+            node.children && stack.push(...node.children)
+          }
+          return result
+        }
+
+        const Search = ({
+          ref_search,
+          ref_input,
+          switch_search,
+          oninput
+        }) => jsx`
+            <div class="box-search" ref=${ref_search}>
+              <div class="box-left">
+                <input ref=${ref_input} type="text" class="search-input" placeholder="输入关键词..." 
+                 onInput=${oninput}/>
+              </div>  
+              <div class="box-right" onClick=${switch_search}>
+                取消
+              </div>
+            </div>`
+
+        const Header = ({ open, ref, data }) => {
           const ref_title = useRef()
           const getPageName = () =>
             getHash()
@@ -435,6 +566,14 @@
           })
           const pageName = getPageName()
           document.title = pageName
+
+          const [
+            ref_search,
+            ref_input,
+            switchSearch,
+            onInput
+          ] = useSearchSwitch(data)
+
           return jsx`
             <header id="header">
               <div class="header-main">
@@ -443,6 +582,17 @@
                   <span class="menu-name">目录</span>
                 </div>
                 <div class="box-middle" ref=${ref_title}>${pageName}</div>
+                <div class="box-right" onClick=${switchSearch}>
+                  <span class="icon-search"><span></span></span>
+                  <span class="search-name">搜索</span>
+                </div>
+                <${Search} 
+                  ref_search=${ref_search}
+                  ref_input=${ref_input}
+                  switch_search=${switchSearch}
+                  data=${data}
+                  oninput=${onInput}
+                />
               </div>
             </header>`
         }
@@ -540,7 +690,7 @@
             event.target === menuOpen_ref.current && open()
           }}>
             <${Aside} close=${close} list=${[1, 2, 3]} data=${data}/>
-            <${Header} ref=${menuOpen_ref}/>
+            <${Header} ref=${menuOpen_ref} data=${data}/>
             <${Main} data=${data}/>
             <${Footer}/>
           </div>
@@ -676,11 +826,11 @@
         const renderHR = ({ nodes, i, line }) => nodes.push(jsx`<hr />`)
 
         const IconBar = () => jsx`
-        <div class="ico-menu">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-        </div>`
+          <div class="ico-menu">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+          </div>`
 
         renderDOM(jsx`<${Index}/>`, document.getElementById("root"))
       })()
