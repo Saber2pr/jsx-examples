@@ -297,14 +297,6 @@
       const forwardRef = FC => ({ ref, ...props }) => FC(props, ref)
       const useRef = value => ({ current: value })
       const renderDOM = (element, container) => container.append(element)
-      const Suspense = ({ fallback, children: promise }) => {
-        promise.then(({ default: dom }) => {
-          const container = fallback.parentNode
-          container.replaceChild(dom, fallback)
-        })
-        return jsx`<${jsx.frag}>${fallback}</${jsx.frag}>`
-      }
-      const lazy = lazyComponent => () => lazyComponent()
       const getHash = () => decodeURIComponent(location.hash).slice(1)
 
       const Ul = ({ children, node, index = 0, render }) => {
@@ -532,7 +524,8 @@
         return { ref, open, close, canClose, menuOpen_ref }
       }
 
-      const App = ({ data }) => {
+      const App = async () => {
+        const data = await fetch(config.menuData).then(res => res.json())
         const { ref, open, close, canClose, menuOpen_ref } = useMaskSwitch()
         const firstChild = queryRootFirstChild(data)
 
@@ -562,17 +555,10 @@
           <div className="Loading-Block" />
         </div>`
 
-      const RequestData = lazy(async () => {
-        const data = await fetch(config.menuData).then(res => res.json())
-        return {
-          default: jsx`<${App} data=${data}/>`
-        }
-      })
-
       const Index = () => jsx`
-        <${Suspense} fallback=${jsx`<${Loading}/>`}>
-          <${RequestData}/>
-        </${Suspense}>`
+        <${jsx.Suspense} fallback=${jsx`<${Loading}/>`}>
+          <${App}/>
+        </${jsx.Suspense}>`
 
       const mergeCode = ls => {
         const result = []
