@@ -204,6 +204,44 @@
         min-height: 5rem;
       }
 
+      .search-result .search-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .search-list li a {
+        color: black;
+      }
+
+      .search-item {
+        background-color: rgba(187, 239, 253, 0.3);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        color: #1a1a1a;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .search-item:hover {
+        background-color: #bbeffd;
+        border-bottom-color: #1a1a1a;
+      }
+
+      .search-list li:nth-child(1) {
+        margin-top: 2rem;
+      }
+
+      .search-list li:nth-child(n + 2)::before {
+        content: " ";
+        display: block;
+        border-bottom: 1px solid #ececec;
+        padding-top: 44px;
+        margin-bottom: 40px;
+      }
+
+      .search-list .search-keyword {
+        background-color: #f5f568;
+      }
+
       .footer-box {
         padding: 0 2rem;
       }
@@ -369,7 +407,6 @@
         const useImperativeHandle = (ref, creator) => (ref.current = creator())
         const forwardRef = FC => ({ ref, ...props }) => FC(props, ref)
         const useRef = value => ({ current: value })
-        const renderDOM = (element, container) => container.append(element)
         const getHash = () => decodeURIComponent(location.hash).slice(1)
 
         const Ul = ({ children, node, index = 0, render }) => {
@@ -496,10 +533,32 @@
           debounce["throttle"] = setTimeout(callback, delta)
         }
 
+        const createListMod = list => {
+          let result
+          return async () => {
+            if (result) return result
+            result = await Promise.all(
+              list.map(({ path, title }) =>
+                fetchContent(path).then(details => ({
+                  path,
+                  title,
+                  details
+                }))
+              )
+            )
+            return result
+          }
+        }
+
+        const routes = {
+          search: "/search?q="
+        }
+
         const useSearchSwitch = data => {
           const ref = useRef()
           ref.show = false
           const ref_input = useRef()
+          let fallbackHref
 
           const open = () => {
             ref.show = true
@@ -507,18 +566,27 @@
             ref_input.current.focus()
           }
 
-          const list = collect(data)
-
           const onInput = e =>
             debounce(() => {
-              console.log(e.target.value)
+              const query = e.target.value
+              if (query) {
+                location.hash = `${routes.search}${query}`
+              }
             })
 
           const close = () => {
             ref.show = false
             ref.current.className = "box-search"
             ref_input.current.value = ""
+            location.hash = fallbackHref
           }
+
+          window.addEventListener("hashchange", () => {
+            const hash = getHash()
+            if (hash.startsWith(routes.search)) return
+            fallbackHref = hash
+            close()
+          })
 
           const switchSearch = () => (ref.show ? close() : open())
           return [ref, ref_input, switchSearch, onInput]
@@ -528,7 +596,7 @@
           const result = []
           while (stack.length) {
             const node = stack.shift()
-            node === tree || result.push(node)
+            node === tree || (!node.children && result.push(node))
             node.children && stack.push(...node.children)
           }
           return result
@@ -542,9 +610,14 @@
         }) => jsx`
             <div class="box-search" ref=${ref_search}>
               <div class="box-left">
-                <input ref=${ref_input} type="text" class="search-input" placeholder="输入关键词..." 
-                 onInput=${oninput}/>
-              </div>  
+                <input 
+                  ref=${ref_input} 
+                  type="text" 
+                  class="search-input" 
+                  placeholder="输入关键词..." 
+                  onInput=${oninput}
+                />
+              </div>
               <div class="box-right" onClick=${switch_search}>
                 取消
               </div>
@@ -559,7 +632,9 @@
           window.addEventListener("hashchange", () => {
             const hash = getHash()
             if (hash) {
-              const pageName = getPageName()
+              const pageName = hash.startsWith(routes.search)
+                ? "搜索结果"
+                : getPageName()
               ref_title.current.innerHTML = pageName
               document.title = pageName
             }
@@ -616,30 +691,105 @@
           }
         }
 
+        const transformHTML = element => jsx`<div>${element}</div>`.innerHTML
+
+        const HighLightHTML = ({
+          source,
+          target,
+          offset = 20,
+          transform = _ => _
+        }) => {
+          const index = source.indexOf(target)
+          if (index === -1) {
+            return jsx`
+              <span>
+                ${source.slice(0, offset * 2)}
+              </span>`
+          }
+          const element = transform(target)
+          const component = jsx`<span/>`
+          component.innerHTML =
+            transformHTML(source.slice(index - offset, index)) +
+            element +
+            transformHTML(
+              source.slice(
+                index + target.length,
+                index + target.length + offset
+              )
+            )
+          return component
+        }
+
+        const SearchResult = ({ result }) =>
+          jsx`
+          <div class="search-result">
+            <h1>共找到${result.length}个结果</h1>
+            <ul class="search-list">
+              ${result.map(
+                ({ path, title, details, searchMeta }, i) =>
+                  jsx`
+                    <li>
+                      <h2>${i + 1}.<a class="search-item" href=${"#" +
+                    path}>${title}</a></h2>
+                      <p>
+                        <${HighLightHTML}
+                          source=${details}
+                          target=${searchMeta}
+                          transform=${str =>
+                            `<a class="search-keyword" href="${"#" +
+                              path}">${str}</a>`}
+                          offset=${40}
+                        />
+                      </p>
+                    </li>`
+              )}
+            </ul>
+          </div>`
+
         const useContentLoad = data => {
           const ref = useRef()
+          const list = collect(data)
+          const listMon = createListMod(list)
           const asyncReFresh = () => {
             const hash = getHash()
-            if (hash) {
+            if (!hash) return
+            if (hash.startsWith("/search")) {
+              const query = hash.slice(routes.search.length)
+              listMon()
+                .then(res => {
+                  const acc = []
+                  for (const item of res) {
+                    if (item.details.concat(item.title).includes(query)) {
+                      item.searchMeta = query
+                      acc.push(item)
+                    }
+                  }
+                  return acc
+                })
+                .then(result =>
+                  jsx.render(
+                    jsx`<${SearchResult} result=${result}/>`,
+                    ref.current
+                  )
+                )
+            } else {
               fetchContent(hash)
                 .then(text => {
-                  ref.current.innerHTML = null
                   if (text.startsWith("<!DOCTYPE html>")) {
-                    ref.current.innerHTML = "加载失败"
+                    jsx.render("加载失败", ref.current)
                   } else {
-                    ref.current.append(jsx`<${Md2jsx}>${text}</${Md2jsx}>`)
+                    jsx.render(jsx`<${Md2jsx}>${text}</${Md2jsx}>`, ref.current)
                   }
                 })
                 .catch(err => {
                   console.log(err)
-                  ref.current.innerHTML = "加载失败"
+                  jsx.render("加载失败", ref.current)
                 })
             }
           }
           window.addEventListener("hashchange", () => {
             asyncReFresh()
-            ref.current.innerHTML = null
-            ref.current.append(jsx`<${Loading}/>`)
+            jsx.render(jsx`<${Loading}/>`, ref.current)
           })
           asyncReFresh()
           return ref
@@ -832,7 +982,7 @@
             <div class="bar"></div>
           </div>`
 
-        renderDOM(jsx`<${Index}/>`, document.getElementById("root"))
+        jsx.render(jsx`<${Index}/>`, document.getElementById("root"))
       })()
     </script>
   </body>
