@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <script src="https://saber2pr.top/jsx/jsx.min.js"></script>
+    <script src="https://saber2pr.top/github-edit/github.min.js"></script>
+    <script src="https://saber2pr.top/loading/index.min.js"></script>
+    <script src="http://saber2pr.top/test/tools/base64.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/styles/default.min.css"
     />
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/highlight.min.js"></script>
-    <title>By Saber2pr</title>
+    <title>saber2pr.top</title>
     <style>
       html,
       body {
@@ -60,7 +63,7 @@
         float: right;
       }
 
-      .pull-right .bt-close {
+      .header .btn {
         cursor: pointer;
       }
 
@@ -393,6 +396,32 @@
         background-color: transparent;
         outline: none;
       }
+
+      .editor {
+        border: 0;
+        border-radius: 0;
+        outline: none;
+        padding: 0.5rem;
+        overflow: auto;
+      }
+
+      .editor:focus {
+        border-color: #2188ff;
+        outline: none;
+        box-shadow: inset 0 1px 2px rgba(27, 31, 35, 0.075),
+          0 0 0 0.2em rgba(3, 102, 214, 0.3);
+      }
+
+      .new-options {
+        list-style-type: none;
+        display: flex;
+        padding: 0;
+        flex-wrap: wrap;
+      }
+
+      .new-options li:nth-child(n + 2) {
+        margin-left: 1rem;
+      }
     </style>
   </head>
   <body>
@@ -401,14 +430,73 @@
       ;(() => {
         const config = {
           copyright: "Copyright © 2019 saber2pr",
-          origin: "https://saber2pr.top",
-          menuData: "https://saber2pr.top/static/data/blog.json"
+          menuData: `/static/data/blog.json`,
+          repo: "saber2pr.github.io",
+          version: "/static/data/version.json"
         }
 
         const useImperativeHandle = (ref, creator) => (ref.current = creator())
         const forwardRef = FC => ({ ref, ...props }) => FC(props, ref)
         const useRef = value => ({ current: value })
         const getHash = () => decodeURIComponent(location.hash).slice(1)
+
+        const versionUp = version =>
+          String(Number(version.split(".").join("")) + 1)
+            .padStart(3, "0")
+            .split("")
+            .join(".")
+
+        const login = async err => {
+          const username = prompt("输入用户名")
+          const password = prompt("输入密码")
+          await github.login(username, password)
+        }
+
+        const request = async callback => {
+          if (localStorage.getItem("Authorization")) {
+            await callback()
+          } else {
+            await login()
+            await callback()
+          }
+        }
+
+        const submit = async (path, content, type = "cou") => {
+          path = path.startsWith("/") ? path.slice(1) : path
+          let res
+          if (type === "cou") {
+            res = await github.createFile(config.repo, path, {
+              message: `update(${path}): ${content.slice(0, 10)}`,
+              content: Base64.encode(content),
+              sha: await github.getSha(config.repo, path)
+            })
+          } else if (type === "del") {
+            res = await github.removeFile(config.repo, path, {
+              message: `delete(${path}): delete`,
+              sha: await github.getSha(config.repo, path)
+            })
+          } else {
+            return
+          }
+
+          if (res.commit) {
+            alert("提交成功")
+          } else {
+            alert("提交失败")
+          }
+        }
+
+        const updateVersion = async () => {
+          const versionData = await fetch(config.version).then(res => res.json)
+          versionData.DYNAMIC_VERSION = versionUp(versionData.DYNAMIC_VERSION)
+          LOADING.init()
+          return request(() =>
+            submit(config.version, JSON.stringify(versionData)).then(() => {
+              LOADING.destroy()
+              alert(`版本${versionData.DYNAMIC_VERSION}更新成功！`)
+            })
+          )
+        }
 
         const Ul = ({ children, node, index = 0, render }) => {
           const ul_ref = useRef()
@@ -509,8 +597,12 @@
             <nav class="nav-main">
               <div class="top">
                 <div class="header">
-                  <div class="pull-left">目录</div>
-                  <div class="pull-right"><div class="bt-close" onClick=${close}>关闭</div></div>
+                  <div class="pull-left">
+                    <div class="btn" onClick=${close}>
+                      <a href="#/新建">新建</a>
+                    </div>
+                  </div>
+                  <div class="pull-right"><div class="btn" onClick=${close}>关闭</div></div>
                 </div>
                 <ul>
                   <${Tree}
@@ -524,7 +616,9 @@
                 <div class="box-version">
                   ${config.copyright}
                 </div>
-                <a href=${config.origin} target="_blank">${config.origin}</a>
+                <a href=${location.origin} target="_blank">${
+            location.origin
+          }</a>
               </div>
             </nav>`
         }
@@ -611,11 +705,11 @@
         }) => jsx`
             <div class="box-search" ref=${ref_search}>
               <div class="box-left">
-                <input 
-                  ref=${ref_input} 
-                  type="text" 
-                  class="search-input" 
-                  placeholder="输入关键词..." 
+                <input
+                  ref=${ref_input}
+                  type="text"
+                  class="search-input"
+                  placeholder="输入关键词..."
                   onInput=${oninput}
                 />
               </div>
@@ -662,7 +756,7 @@
                   <span class="icon-search"><span></span></span>
                   <span class="search-name">搜索</span>
                 </div>
-                <${Search} 
+                <${Search}
                   ref_search=${ref_search}
                   ref_input=${ref_input}
                   switch_search=${switchSearch}
@@ -682,8 +776,7 @@
           }
         }
 
-        const fetchContent = url =>
-          fetch(`${config.origin}${url}.md`).then(res => res.text())
+        const fetchContent = url => fetch(`${url}.md`).then(res => res.text())
 
         const queryRootFirstChild = entry => {
           const children = entry.children
@@ -747,10 +840,103 @@
             </ul>
           </div>`
 
+        const NewBlog = ({ data }) => {
+          const list = data.children.reduce(
+            (acc, n) => (n.children ? acc.concat(n) : acc),
+            []
+          )
+          const ref_select = {}
+          const ref_input = {}
+          const ref_content = {}
+          return jsx`<div>
+              <nav>
+                <ul class="new-options">
+                  <li>
+                    分类：<select ref=${ref_select}>
+                      ${list.map(
+                        ({ title, path }) =>
+                          jsx`<option value=${path}>${title}</option>`
+                      )}
+                    </select>
+                  </li>
+                  <li>标题：<input ref=${ref_input} type="text" /></li>
+                </ul>
+              </nav>
+              <div>
+                <p>正文：</p><div class="editor" ref=${ref => {
+                  ref.contentEditable = true
+                  ref_content.current = ref
+                }}>输入内容</div>
+              </section>
+              <section>
+                <p><button onclick=${async () => {
+                  const val = confirm("确定提交？(tips: 注意备份保存)")
+                  if (val) {
+                    const hash = `${ref_select.current.value}/${
+                      ref_input.current.value
+                    }.md`
+                    console.log(
+                      `正在提交${hash}`,
+                      ref_content.current.innerText
+                    )
+                    LOADING.init()
+                    await request(() =>
+                      submit(hash, ref_content.current.innerText).then(() => {
+                        LOADING.destroy()
+                        console.log(`提交成功${hash}`)
+                      })
+                    )
+                    await updateVersion()
+                  }
+                }}>提交</button></p>
+              </section>
+            </div>`
+        }
+
         const useContentLoad = data => {
           const ref = useRef()
           const list = collect(data)
           const listMon = createListMod(list)
+
+          const createEditor = (text, onSave, back) => {
+            const edit_ref = useRef()
+            jsx.render(
+              jsx`<div>
+                <pre class="editor" ref=${ref => {
+                  edit_ref.current = ref
+                  ref.contentEditable = true
+                }}>${text}</pre>
+                <button onclick=${() =>
+                  onSave(edit_ref.current.innerText)}>保存</button>
+                <button onclick=${back}>返回</button>
+              </div>`,
+              ref.current
+            )
+          }
+
+          const createMarkdown = (text, Save, onDel) => {
+            jsx.render(
+              jsx`<div>
+                    <${Md2jsx}>${text}</${Md2jsx}>
+                    <br/>
+                    <button onclick=${() =>
+                      createEditor(
+                        text,
+                        newText => {
+                          LOADING.init()
+                          return Save(newText).then(() => {
+                            LOADING.destroy()
+                            createMarkdown(newText, onDel)
+                          })
+                        },
+                        () => createMarkdown(text, Save, onDel)
+                      )}>编辑</button>
+                    <button onclick=${onDel}>删除</button>
+                  </div>`,
+              ref.current
+            )
+          }
+
           const asyncReFresh = () => {
             const hash = getHash()
             if (!hash) return
@@ -773,13 +959,38 @@
                     ref.current
                   )
                 )
+            } else if (hash === "/新建") {
+              setTimeout(
+                () => jsx.render(jsx`<${NewBlog} data=${data}/>`, ref.current),
+                100
+              )
             } else {
               fetchContent(hash)
                 .then(text => {
                   if (text.startsWith("<!DOCTYPE html>")) {
                     jsx.render("加载失败", ref.current)
                   } else {
-                    jsx.render(jsx`<${Md2jsx}>${text}</${Md2jsx}>`, ref.current)
+                    createMarkdown(
+                      text,
+                      async newText => {
+                        await request(() => submit(hash + ".md", newText))
+                        await updateVersion()
+                      },
+                      async () => {
+                        const val = confirm(`确认删除${hash}?`)
+                        if (val) {
+                          LOADING.init()
+                          console.log(`正在删除${hash}`)
+                          await request(() =>
+                            submit(hash + ".md", newText, "del").then(() => {
+                              LOADING.destroy()
+                              console.log(`删除成功${hash}`)
+                            })
+                          )
+                          await updateVersion()
+                        }
+                      }
+                    )
                   }
                 })
                 .catch(err => {
