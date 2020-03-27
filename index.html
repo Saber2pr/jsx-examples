@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 0.0.2 -->
+<!-- 0.0.3 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -482,14 +482,15 @@
           }
 
           if (res.commit) {
-            alert("提交成功")
           } else {
             alert("提交失败")
           }
         }
 
         const updateVersion = async () => {
-          const versionData = await fetch(config.version).then(res => res.json)
+          const versionData = await fetch(config.version).then(res =>
+            res.json()
+          )
           versionData.DYNAMIC_VERSION = versionUp(versionData.DYNAMIC_VERSION)
           LOADING.init()
           return request(() =>
