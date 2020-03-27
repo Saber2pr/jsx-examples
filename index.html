@@ -1017,6 +1017,16 @@
                         const LastModified = new Date().toISOString()
                         // update github files
                         await request(() => submit(hash + ".md", newText))
+                        // update blog.json
+                        const node = findNodeByPath(hash, data)
+                        node.LastModified = LastModified
+                        await request(() =>
+                            submit(config.menuData, JSON.stringify(data)).then(
+                              () => {
+                                console.log(`提交成功${config.menuData}`, data)
+                              }
+                            )
+                          )
                         // update acts
                         await updateActs(
                           "update",
