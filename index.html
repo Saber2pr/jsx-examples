@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 0.0.4 -->
+<!-- 0.0.3 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -463,10 +463,10 @@
           }
         }
 
-        const submit = async (path, content, type = "update") => {
+        const submit = async (path, content, type = "cou") => {
           path = path.startsWith("/") ? path.slice(1) : path
           let res
-          if (type === "update") {
+          if (type === "cou") {
             res = await github.createFile(config.repo, path, {
               message: `update(${path}): ${content.slice(0, 10)}`,
               content: Base64.encode(content),
@@ -476,11 +476,6 @@
             res = await github.removeFile(config.repo, path, {
               message: `delete(${path}): delete`,
               sha: await github.getSha(config.repo, path)
-            })
-          } else if (type === "create") {
-            res = await github.removeFile(config.repo, path, {
-              message: `create(${path}): ${content.slice(0, 10)}`,
-              content: Base64.encode(content)
             })
           } else {
             return
@@ -899,11 +894,7 @@
                     LOADING.init()
                     // update github files
                     await request(() =>
-                      submit(
-                        hash,
-                        ref_content.current.innerText,
-                        "create"
-                      ).then(() => {
+                      submit(hash, ref_content.current.innerText).then(() => {
                         console.log(`提交成功${hash}`)
                       })
                     )
