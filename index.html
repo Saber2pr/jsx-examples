@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 0.0.3 -->
+<!-- 0.0.5 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1031,13 +1031,33 @@
                         const val = confirm(`确认删除${hash}?`)
                         if (val) {
                           LOADING.init()
+                          const node = findNodeByPath(hash, data)
+                          const ss = hash.split("/")
+                          ss.pop()
+                          const dir_path = ss.join("/")
+                          const dir = findNodeByPath(dir_path, data)
+                          dir.children.splice(dir.children.indexOf(node), 1)
                           const LastModified = new Date().toISOString()
-                          console.log(`正在删除${hash}`)
+                          console.log(
+                            `正在删除${hash}`,
+                            "dir:",
+                            dir,
+                            "node:",
+                            node
+                          )
                           // update github files
                           await request(() =>
-                            submit(hash + ".md", newText, "del").then(() => {
+                            submit(hash + ".md", "", "del").then(() => {
                               console.log(`删除成功${hash}`)
                             })
+                          )
+                          // update blog.json
+                          await request(() =>
+                            submit(config.menuData, JSON.stringify(data)).then(
+                              () => {
+                                console.log(`提交成功${config.menuData}`, data)
+                              }
+                            )
                           )
                           // update acts
                           await updateActs(
