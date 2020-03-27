@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 0.0.5 -->
+<!-- 0.0.6 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -927,8 +927,8 @@
             date
           })
           await request(() =>
-            submit(config.acts, JSON.stringify(acts)).then(() => {
-              console.log(`提交成功${config.acts}`, acts)
+            submit(config.acts, JSON.stringify(acts.slice(0, 50))).then(() => {
+              console.log(`提交成功${config.acts}`, acts.slice(0, 50))
             })
           )
         }
