@@ -428,11 +428,13 @@
     <div id="root"></div>
     <script>
       ;(() => {
+        const origin = "https://saber2pr.top"
         const config = {
           copyright: "Copyright © 2019 saber2pr",
-          menuData: `/static/data/blog.json`,
+          menuData: `${origin}/static/data/blog.json`,
+          acts: `${origin}/static/data/activity.json`,
           repo: "saber2pr.github.io",
-          version: "/static/data/version.json"
+          version: `${origin}/static/data/version.json`
         }
 
         const useImperativeHandle = (ref, creator) => (ref.current = creator())
@@ -776,7 +778,8 @@
           }
         }
 
-        const fetchContent = url => fetch(`${url}.md`).then(res => res.text())
+        const fetchContent = url =>
+          fetch(`${origin}${url}.md`).then(res => res.text())
 
         const queryRootFirstChild = entry => {
           const children = entry.children
@@ -879,18 +882,55 @@
                       `正在提交${hash}`,
                       ref_content.current.innerText
                     )
+                    const dir = findNodeByPath(ref_select.current.value, data)
+                    const LastModified = new Date().toISOString()
+                    dir.children.push({
+                      LastModified,
+                      path: `${ref_select.current.value}/${
+                        ref_input.current.value
+                      }`,
+                      title: ref_input.current.value
+                    })
                     LOADING.init()
+                    // update github files
                     await request(() =>
                       submit(hash, ref_content.current.innerText).then(() => {
-                        LOADING.destroy()
                         console.log(`提交成功${hash}`)
                       })
                     )
+                    // update blog.json
+                    await request(() =>
+                      submit(config.menuData, JSON.stringify(data)).then(() => {
+                        console.log(`提交成功${config.menuData}`, data)
+                      })
+                    )
+                    // update acts.json
+                    await updateActs(
+                      "create",
+                      hash.replace(/^\/blog/, ""),
+                      LastModified
+                    )
+                    // update ver
                     await updateVersion()
+                    LOADING.destroy()
                   }
                 }}>提交</button></p>
               </section>
             </div>`
+        }
+
+        const updateActs = async (type, text, date) => {
+          const acts = await fetch(config.acts).then(res => res.json())
+          acts.unshift({
+            type,
+            text,
+            date
+          })
+          await request(() =>
+            submit(config.acts, JSON.stringify(acts)).then(() => {
+              console.log(`提交成功${config.acts}`, acts)
+            })
+          )
         }
 
         const useContentLoad = data => {
@@ -973,21 +1013,41 @@
                     createMarkdown(
                       text,
                       async newText => {
+                        LOADING.init()
+                        const LastModified = new Date().toISOString()
+                        // update github files
                         await request(() => submit(hash + ".md", newText))
+                        // update acts
+                        await updateActs(
+                          "update",
+                          `${hash.replace(/^\/blog/)}.md`,
+                          LastModified
+                        )
+                        // update ver
                         await updateVersion()
+                        LOADING.destroy()
                       },
                       async () => {
                         const val = confirm(`确认删除${hash}?`)
                         if (val) {
                           LOADING.init()
+                          const LastModified = new Date().toISOString()
                           console.log(`正在删除${hash}`)
+                          // update github files
                           await request(() =>
                             submit(hash + ".md", newText, "del").then(() => {
-                              LOADING.destroy()
                               console.log(`删除成功${hash}`)
                             })
                           )
+                          // update acts
+                          await updateActs(
+                            "delete",
+                            `${hash.replace(/^\/blog/)}.md`,
+                            LastModified
+                          )
+                          // update ver
                           await updateVersion()
+                          LOADING.destroy()
                         }
                       }
                     )
